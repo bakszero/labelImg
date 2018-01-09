@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf8 -*-
 import sys
+import json
+import xmltodict
 from xml.etree import ElementTree
 from xml.etree.ElementTree import Element, SubElement
 from lxml import etree
@@ -110,19 +112,30 @@ class PascalVocWriter:
             ymax = SubElement(bndbox, 'ymax')
             ymax.text = str(each_object['ymax'])
 
+    def convert2json(self, targetFile):
+        #Bakhtiyar Syed 9.1.18
+        d = xmltodict.parse(targetFile, xml_attribs=True)
+        return json.dumps(d, indent=4)
+
     def save(self, targetFile=None):
+        #Add conversion to JSON integration.
+        #Bakhtiyar Syed- IIIT Hyderabad
         root = self.genXML()
         self.appendObjects(root)
         out_file = None
-        if targetFile is None:
-            out_file = codecs.open(
-                self.filename + XML_EXT, 'w', encoding=ENCODE_METHOD)
-        else:
-            out_file = codecs.open(targetFile, 'w', encoding=ENCODE_METHOD)
 
+        if targetFile is None:
+            out_file_XML = codecs.open(self.filename + XML_EXT, 'w', encoding=ENCODE_METHOD)
+            out_file_JSON = codecs.open(self.filename + '.json', 'w', encoding = ENCODE_METHOD)
+        else:
+            targetFile = targetFile.split('.')[0]
+            out_file_XML = codecs.open(targetFile+ XML_EXT, 'w', encoding=ENCODE_METHOD)
+            out_file_JSON = codecs.open(targetFile+ '.json', 'w', encoding=ENCODE_METHOD)
         prettifyResult = self.prettify(root)
-        out_file.write(prettifyResult.decode('utf8'))
-        out_file.close()
+        out_file_XML.write(prettifyResult.decode('utf8'))
+        out_file_JSON.write(self.convert2json(prettifyResult.decode('utf8')))
+        out_file_JSON.close()
+        out_file_XML.close()
 
 
 class PascalVocReader:
